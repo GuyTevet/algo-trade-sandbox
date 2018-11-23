@@ -13,6 +13,39 @@ class DataLoader(object):
         self.dataPath = dataPath
         self.testSize = 200 # HARD CODED - do not change!
 
+    # def splitData(self,splitList):
+    #
+    #     splitDicts = [dict()] * len(splitList)
+    #
+    # def getDailyData(self,dayIdx):
+    #
+    #     nameList = sorted(self.data.keys())
+    #     closeList =
+
+    # def getNamesDates(self):
+    #
+    #     names = []
+    #     dates = []
+    #
+    #     with open(self.dataPath,'r') as f:
+    #         reader = csv.DictReader(f)
+    #
+    #         for row in reader:
+    #             if row['Name'] not in names:
+    #                 names.append(row['Name'])
+    #             if row['date'] not in dates:
+    #                 dates.append(row['date'])
+    #
+    #     # sort
+    #     names = sorted(names)
+    #
+    #
+    #     return names, dates
+
+
+
+
+
     def getData(self):
 
         data = {}
