@@ -151,7 +151,7 @@ class DataLoader(object):
 if __name__ == '__main__':
 
     # Test
-    D = DataLoader('./data/all_stocks_5yr.csv')
+    D = DataLoader(os.path.join('.','data','all_stocks_5yr.csv'))
     D.load_data()
     D.debug_plot()
     D.debug_plot(type='test')
