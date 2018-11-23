@@ -4,6 +4,8 @@ import csv
 from copy import copy
 from tempfile import NamedTemporaryFile
 import shutil
+import matplotlib.pyplot as plt
+import random
 
 class DataLoader(object):
 
@@ -100,6 +102,7 @@ class DataLoader(object):
         }
 
         self.test_dict = copy(self.train_dict)
+        self.test_dict['num_dates'] = self.test_size
 
         table_names = copy(reader.fieldnames)
         table_names.remove('Name')
@@ -116,6 +119,40 @@ class DataLoader(object):
 
         return
 
-# Test
-D = DataLoader('./data/all_stocks_5yr.csv')
-data = D.load_data()
+    def debug_plot(self, num_plots = 20, type='train'):
+
+        debug_dir = os.path.join('.','debug')
+
+        if not os.path.exists(debug_dir):
+            os.mkdir(debug_dir)
+
+        if type == 'train':
+            data = self.train_dict
+        elif type == 'test':
+            data = self.test_dict
+
+        for stock_i in random.sample(range(data['num_stocks']), num_plots):
+
+            name = '{0}-{1}'.format(data['stock_names'][stock_i], type)
+
+            plt.figure(figsize=(20,10))
+            plt.title(name)
+            keys = ['open','close','high','low']
+            lines = []
+            for key in keys:
+                l, = plt.plot(np.arange(data['num_dates']),data[key][stock_i], linewidth=.4)
+                lines.append(l)
+            plt.legend(lines, keys)
+            plt.savefig(os.path.join(debug_dir,name + '.png'))
+
+        return
+
+
+if __name__ == '__main__':
+
+    # Test
+    D = DataLoader('./data/all_stocks_5yr.csv')
+    D.load_data()
+    D.debug_plot()
+    D.debug_plot(type='test')
+
