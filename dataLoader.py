@@ -26,25 +26,25 @@ class DataLoader(object):
         print('DataLoader - csv_hole_filler...')
 
         holes = 0
-        temp_file = NamedTemporaryFile(delete=False)
+        temp_file_path = NamedTemporaryFile(delete=False).name
 
-        with open(self.data_path, 'rb') as csv_file, temp_file:
-            reader = csv.reader(csv_file)
-            writer = csv.writer(temp_file)
+        with open(self.data_path, 'r') as csv_file:
+            with open(temp_file_path, 'r+') as temp_file:
+                reader = csv.reader(csv_file)
+                writer = csv.writer(temp_file, lineterminator='\n')
 
-            prev_row = None
+                prev_row = None
 
-            for row in reader:
-                for i in range(len(row)):
-                    if row[i] == '' or row[i] == ' ':
-                        holes += 1
-                        row[i] = prev_row[i]
+                for row in reader:
+                    for i in range(len(row)):
+                        if row[i] == '' or row[i] == ' ':
+                            holes += 1
+                            row[i] = prev_row[i]
 
-                writer.writerow(row)
-                prev_row = copy(row)
+                    writer.writerow(row)
+                    prev_row = copy(row)
 
-            shutil.move(temp_file.name, self.data_path)
-
+        shutil.move(temp_file.name, self.data_path)
         print('DataLoader - csv_hole_filler found [{}] holes'.format(holes))
 
     def load_data(self):
@@ -83,9 +83,13 @@ class DataLoader(object):
         self.total_size = max([len(data[name]['date']) for name in data.keys()])
         self.train_size = self.total_size - self.test_size
 
+        incorrect_data_keys = []
         for name in data.keys():
             if not self.total_size == len(data[name]['date']):
-                del data[name]
+                incorrect_data_keys.append(name)
+
+        for name in incorrect_data_keys:
+            del data[name]
 
         stock_names = sorted(data.keys())
         num_stocks = len(stock_names)
