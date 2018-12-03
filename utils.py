@@ -68,6 +68,16 @@ def dump_csv(matrix, row_list, col_list, save_path):
     df.to_csv(save_path)
     return
 
+def value_matrix2gain_matrix(value_matrix):
+    """
+
+    :param value_matrix: assuming dims [num_stocks X num_days]
+    :return:
+    """
+    shifted_value_matrix = np.roll(value_matrix, [0,1])
+    gain_matrix = (value_matrix / shifted_value_matrix)[:,1:]
+    return gain_matrix
+
 
 if __name__ == '__main__':
 
@@ -92,3 +102,9 @@ if __name__ == '__main__':
              row_list=traders,
              col_list=None,
              save_path=os.path.join('debug','daily_gain.csv'))
+
+    from dataLoader import DataLoader
+    D = DataLoader(os.path.join('.', 'data', 'all_stocks_5yr.csv'))
+    D.load_data()
+    close_matrix = D.train_dict['close']
+    gain_matrix = value_matrix2gain_matrix(close_matrix)
