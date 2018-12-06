@@ -5,9 +5,10 @@ from trader import Trader
 
 
 class TraderSimulation(object):
-    def __init__(self, traders_dict, data_path, first_train_day=200):
+    def __init__(self, traders_dict, data_path, first_train_day=200, test_size=200):
         self._traders = traders_dict
         self._data_loader = DataLoader(data_path)
+        self._data_loader.test_size = test_size
         self._data_loader.load_data()
         self._first_train_day = first_train_day
 
@@ -32,10 +33,8 @@ class TraderSimulation(object):
 
 
 if __name__ == '__main__':
-    traders_dic = {'base_trader':Trader()}
-    data_path = os.path.join('.','data','all_stocks_5yr.csv')
+    traders_dic = {'base_trader': Trader()}
+    data_path = os.path.join('.', 'data', 'all_stocks_5yr.csv')
     trader_simulation = TraderSimulation(traders_dic, data_path)
     predictions = trader_simulation.get_prediction(10)
     print(predictions)
-
-
