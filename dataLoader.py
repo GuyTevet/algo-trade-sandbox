@@ -6,6 +6,7 @@ from tempfile import NamedTemporaryFile
 import shutil
 import matplotlib.pyplot as plt
 import random
+import time
 
 class DataLoader(object):
 
@@ -15,6 +16,7 @@ class DataLoader(object):
 
     def __init__(self,data_path):
         self.data_path = data_path
+        self.data_npy_path = self.data_path.replace('.csv','.npy')
         self.total_size = -1
         self.test_size = 200 # HARD CODED - do not change!
         self.train_size = -1
@@ -49,77 +51,87 @@ class DataLoader(object):
 
     def load_data(self):
 
-        data = {}
+        if os.path.exists(self.data_npy_path):
+            data_dict = np.load(self.data_npy_path)
+            self.train_dict = data_dict.item().get('train')
+            self.test_dict = data_dict.item().get('test')
+        else:
 
-        self.csv_hole_filler()
+            data = {}
 
-        with open(self.data_path,'r') as f:
-            reader = csv.DictReader(f)
+            self.csv_hole_filler()
 
-            for row in reader:
+            with open(self.data_path,'r') as f:
+                reader = csv.DictReader(f)
 
-                new_stock = False
-                name = row['Name']
-                del row['Name']
+                for row in reader:
 
-                # add name if new
-                if name not in data.keys():
-                    data[name] = {}
-                    new_stock = True
+                    new_stock = False
+                    name = row['Name']
+                    del row['Name']
 
-                # add data
-                for key in row.keys():
-                    try:
-                        val = float(row[key])
-                    except:
-                        val = row[key]
+                    # add name if new
+                    if name not in data.keys():
+                        data[name] = {}
+                        new_stock = True
 
-                    if new_stock:
-                        data[name][key] = [val]
-                    else:
-                        data[name][key].append(val)
+                    # add data
+                    for key in row.keys():
+                        try:
+                            val = float(row[key])
+                        except:
+                            val = row[key]
 
-        # create train/test dicts
-        self.total_size = max([len(data[name]['date']) for name in data.keys()])
-        self.train_size = self.total_size - self.test_size
+                        if new_stock:
+                            data[name][key] = [val]
+                        else:
+                            data[name][key].append(val)
 
-        incorrect_data_keys = []
-        for name in data.keys():
-            if not self.total_size == len(data[name]['date']):
-                incorrect_data_keys.append(name)
+            # create train/test dicts
+            self.total_size = max([len(data[name]['date']) for name in data.keys()])
+            self.train_size = self.total_size - self.test_size
 
-        for name in incorrect_data_keys:
-            del data[name]
+            incorrect_data_keys = []
+            for name in data.keys():
+                if not self.total_size == len(data[name]['date']):
+                    incorrect_data_keys.append(name)
 
-        stock_names = sorted(data.keys())
-        num_stocks = len(stock_names)
+            for name in incorrect_data_keys:
+                del data[name]
 
-        self.train_dict = {
-            'num_stocks': num_stocks,
-            'num_dates': self.train_size,
-            'stock_names': stock_names,
-            # 'close': np.empty([num_stocks, self.total_size], dtype=np.float32),
-            # 'open': np.empty([num_stocks, self.total_size], dtype=np.float32),
-            # 'high': np.empty([num_stocks, self.total_size], dtype=np.float32),
-            # 'low': np.empty([num_stocks, self.total_size], dtype=np.float32),
-            # 'volume': np.empty([num_stocks, self.total_size], dtype=np.float32)
-        }
+            stock_names = sorted(data.keys())
+            num_stocks = len(stock_names)
 
-        self.test_dict = copy(self.train_dict)
-        self.test_dict['num_dates'] = self.test_size
+            self.train_dict = {
+                'num_stocks': num_stocks,
+                'num_dates': self.train_size,
+                'stock_names': stock_names,
+                # 'close': np.empty([num_stocks, self.total_size], dtype=np.float32),
+                # 'open': np.empty([num_stocks, self.total_size], dtype=np.float32),
+                # 'high': np.empty([num_stocks, self.total_size], dtype=np.float32),
+                # 'low': np.empty([num_stocks, self.total_size], dtype=np.float32),
+                # 'volume': np.empty([num_stocks, self.total_size], dtype=np.float32)
+            }
 
-        table_names = copy(reader.fieldnames)
-        table_names.remove('Name')
-        table_names.remove('date')
+            self.test_dict = copy(self.train_dict)
+            self.test_dict['num_dates'] = self.test_size
 
-        # add dict tables
-        for table in table_names:
-            self.train_dict[table] = np.empty([num_stocks, self.train_size], dtype=np.float32)
-            self.test_dict[table] = np.empty([num_stocks, self.test_size], dtype=np.float32)
+            table_names = copy(reader.fieldnames)
+            table_names.remove('Name')
+            table_names.remove('date')
 
-            for stock_i, name in enumerate(stock_names):
-                self.train_dict[table][stock_i] = data[name][table][:self.train_size]
-                self.test_dict[table][stock_i] = data[name][table][-self.test_size:]
+            # add dict tables
+            for table in table_names:
+                self.train_dict[table] = np.empty([num_stocks, self.train_size], dtype=np.float32)
+                self.test_dict[table] = np.empty([num_stocks, self.test_size], dtype=np.float32)
+
+                for stock_i, name in enumerate(stock_names):
+                    self.train_dict[table][stock_i] = data[name][table][:self.train_size]
+                    self.test_dict[table][stock_i] = data[name][table][-self.test_size:]
+
+            # save
+            np.save(self.data_npy_path.replace('.npy',''), {'train': self.train_dict,
+                                                            'test': self.test_dict})
 
         return
 
@@ -148,6 +160,7 @@ class DataLoader(object):
                 lines.append(l)
             plt.legend(lines, keys)
             plt.savefig(os.path.join(debug_dir,name + '.png'))
+            plt.close()
 
         return
 
@@ -156,7 +169,9 @@ if __name__ == '__main__':
 
     # Test
     D = DataLoader(os.path.join('.','data','all_stocks_5yr.csv'))
+    t0 = time.time()
     D.load_data()
+    print('loaded data in [{0:0.2f}] seconds '.format(time.time() - t0))
     D.debug_plot()
     D.debug_plot(type='test')
 
