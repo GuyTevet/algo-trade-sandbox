@@ -13,16 +13,13 @@ class TraderSimulation(object):
         self._first_train_day = first_train_day
 
     def get_prediction(self, prediction_day):
-        # fixme: Create function in data loader
-        data_keys = ['close', 'open', 'high', 'low', 'volume']
-
         # Avoid loading the table again to memory if parameters are invalid
         if prediction_day > self._data_loader.train_dict['num_dates'] - 1:
             raise ValueError('prediction_day have to be smaller than num_days - 1')
 
         history_dict = self._data_loader.train_dict.copy()
         history_dict['num_dates'] = prediction_day - 1
-        for k in data_keys:
+        for k in self._data_loader.data_columns:
             history_dict[k] = history_dict[k][:, :prediction_day - 1]
 
         prediction_dict = {}

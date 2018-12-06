@@ -22,6 +22,7 @@ class DataLoader(object):
         self.train_size = -1
         self.train_dict = {}
         self.test_dict = {}
+        self.data_columns = []
 
     def csv_hole_filler(self):
 
@@ -132,6 +133,10 @@ class DataLoader(object):
             # save
             np.save(self.data_npy_path.replace('.npy',''), {'train': self.train_dict,
                                                             'test': self.test_dict})
+
+        for key in self.test_dict.keys():
+            if key != 'num_stocks' and key != 'num_dates' and key != 'stock_names':
+                self.data_columns.append(key)
 
         return
 
