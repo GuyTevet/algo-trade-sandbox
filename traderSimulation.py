@@ -5,11 +5,11 @@ from trader import Trader
 
 
 class TraderSimulation(object):
-    def __init__(self, traders_dict, data_path):
+    def __init__(self, traders_dict, data_path, first_train_day=200):
         self._traders = traders_dict
         self._data_loader = DataLoader(data_path)
         self._data_loader.load_data()
-        pass
+        self._first_train_day = first_train_day
 
     def get_prediction(self, prediction_day):
         # fixme: Create function in data loader
@@ -22,12 +22,11 @@ class TraderSimulation(object):
         history_dict = self._data_loader.train_dict.copy()
         history_dict['num_dates'] = prediction_day - 1
         for k in data_keys:
-            for s in history_dict['stock_names']:
-                history_dict[k][s] = history_dict[k][s][:prediction_day - 1]
+            history_dict[k] = history_dict[k][:, :prediction_day - 1]
 
         prediction_dict = {}
-        for trader_name, trader in self._traders:
-            prediction_dict[trader_name] = trader.prediction(history_dict)
+        for trader_name, trader in self._traders.items():
+            prediction_dict[trader_name] = trader.predict(history_dict)
 
         return prediction_dict
 
